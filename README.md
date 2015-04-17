@@ -1,4 +1,10 @@
-# epiphany-pce
+# Epiphany PC Engine
 A PC Engine/Turbo Grafx-16 emulator for the Parallella development board
 
-See http://archaicpixels.com#Hardware for technical information.
+## Build requirements
+* qmake
+* <a href="https://github.com/GravisZro/mkspec-epiphany#installation">mkspec-epiphany</a>
+
+## Technical Information
+See http://archaicpixels.com#Hardware
+
