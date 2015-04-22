@@ -2,9 +2,21 @@
 
 namespace HuC6280
 {
+  Registers Core::m_regs;
+  Timer Core::m_timer;
+  IRQs  Core::m_irqs;
+
+  uint8_t Core::m_mem_mappers[8] = { 0 };
+  uint8_t Core::m_reset = 0;
+  uint8_t Core::m_speed = 0;
+
+  void irq_handler(int)
+    { Core::ProcessPorts(); }
+
   Core::Core(void)
   {
     Reset();
+    e_irq_attach(E_USER_INT, irq_handler);
   }
 
   void Core::Read (IO::common_busses_t& busses)
@@ -23,6 +35,10 @@ namespace HuC6280
     raw_push(m_regs.PC.low    ); // 1
     raw_push(m_regs.PC.high   ); // 1
     raw_push(m_regs.P | flag_B); // 1
+
+    m_timer.Reset();
+    m_irqs.Reset();
+    m_regs.Reset();
 
     m_regs.PC.low  = ReadMem(RESET_VECTOR    ); // 1
     m_regs.PC.high = ReadMem(RESET_VECTOR + 1); // 1
@@ -379,47 +395,7 @@ namespace HuC6280
 
 //====================================================================================
 
-//========================== MEMORY IO ============================
-
-  // 0 cycles
-  uint8_t Core::Read (uint16_t address)
-  {
-    mapper_t& base = to<mapper_t>(address);
-    IO::common_busses_t busses{base.page_address, m_mem_mappers[base.mapper]};
-    Read(busses);
-    return busses.data;
-  }
-
-  // 0 cycles
-  void Core::Write (uint16_t address, uint8_t value) // 1
-  {
-    mapper_t& base = to<mapper_t>(address);
-    Write(IO::common_busses_t {base.page_address, m_mem_mappers[base.mapper], value});
-  }
-
-  // 1 cycle
-  uint8_t Core::ReadMem (uint16_t address)
-  {
-    AddCycle();
-    return Read(address);
-  }
-
-  // 1 cycle
-  void Core::WriteMem (uint16_t address, uint8_t value)
-  {
-    AddCycle();
-    Write(address, value);
-  }
-
-  // 1 cycle
-  uint8_t Core::GetPC(void)
-  {
-    return ReadMem(m_regs.PC16++);
-  }
-
-
 //========================== COMMON HELPERS ============================
-
 
   // 2 cycles
   template<uint8_t bit_flag>
@@ -440,13 +416,6 @@ namespace HuC6280
     m_regs.flags.N = value & flag_N ? 1 : 0;
 
     AddCycle();
-  }
-
-
-  // 0 cycles
-  inline uint8_t Core::IRQsActive(void)
-  {
-    return m_regs.flags.I ? 0 : (to_u8(m_irqs.active) & to_u8(m_irqs.enabled));
   }
 
 //========================== ADDRESSING MODES ============================
@@ -924,37 +893,37 @@ namespace HuC6280
   static uint16_t m_bmt_destination;
   static uint16_t m_bmt_alternate;
 
-  void Core::tai_loop(Core* instance) // 2 cycles
+  void Core::tai_loop(void) // 2 cycles
   {
-    instance->WriteMem(m_bmt_destination, instance->ReadMem(m_bmt_source + m_bmt_alternate)); // 2
+    WriteMem(m_bmt_destination, ReadMem(m_bmt_source + m_bmt_alternate)); // 2
     ++m_bmt_destination;
     m_bmt_alternate ^= 1;
   }
 
-  void Core::tdd_loop(Core* instance) // 2 cycles
+  void Core::tdd_loop(void) // 2 cycles
   {
-    instance->WriteMem(m_bmt_destination, instance->ReadMem(m_bmt_source)); // 2
+    WriteMem(m_bmt_destination, ReadMem(m_bmt_source)); // 2
     --m_bmt_source;
     --m_bmt_destination;
   }
 
-  void Core::tia_loop(Core* instance) // 2 cycles
+  void Core::tia_loop(void) // 2 cycles
   {
-    instance->WriteMem(m_bmt_destination + m_bmt_alternate, instance->ReadMem(m_bmt_source)); // 2
+    WriteMem(m_bmt_destination + m_bmt_alternate, ReadMem(m_bmt_source)); // 2
     ++m_bmt_source;
     m_bmt_alternate ^= 1;
   }
 
-  void Core::tii_loop(Core* instance) // 2 cycles
+  void Core::tii_loop(void) // 2 cycles
   {
-    instance->WriteMem(m_bmt_destination, instance->ReadMem(m_bmt_source)); // 2
+    WriteMem(m_bmt_destination, ReadMem(m_bmt_source)); // 2
     ++m_bmt_source;
     ++m_bmt_destination;
   }
 
-  void Core::tin_loop(Core* instance) // 2 cycles
+  void Core::tin_loop(void) // 2 cycles
   {
-    instance->WriteMem(m_bmt_destination, instance->ReadMem(m_bmt_source)); // 2
+    WriteMem(m_bmt_destination, ReadMem(m_bmt_source)); // 2
     ++m_bmt_source;
   }
 
@@ -979,7 +948,7 @@ namespace HuC6280
     {
       AddCycle();
       AddCycle();
-      transfer_func(this); // 2
+      transfer_func(); // 2
       AddCycle();
       AddCycle();
     } while(--transfer_length); // if transfer_length is 0, it will loop 0xFFFF times

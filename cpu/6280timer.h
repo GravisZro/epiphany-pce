@@ -5,15 +5,17 @@
 
 namespace HuC6280
 {
-  class Timer : protected BusInterface
+  class Timer : public BusInterface
   {
   public:
     Timer(void);
 
-    void ProcessPorts(void);
     void Reset(void);
     void Read (      IO::common_busses_t& busses);
     void Write(const IO::common_busses_t& busses);
+
+  private:
+    inline addr_range_t AddressRange(void) const { return {IO::PSG, IO::Timer}; }
 
   public:
     Timer& operator --(void);
@@ -21,8 +23,6 @@ namespace HuC6280
 
     bool isEnabled(void) const { return m_enabled; }
 
-  private:
-    inline addr_range_t AddressRange(void) const { return {IO::PSG, IO::Timer}; }
   private:
     uint32_t m_enabled       : 1 ; // enable/disable timer at 0x0C01 (disabled = 0, enabled = 1)
     uint32_t m_timer_counter : 7 ; // 7 bit counter at 0x0C00

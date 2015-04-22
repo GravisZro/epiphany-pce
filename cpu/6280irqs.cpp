@@ -16,14 +16,9 @@ namespace HuC6280
     active  = { 0, 0, 0 };
   }
 
-
-  void IRQs::ProcessPorts(void)
-  {
-  }
-
   void IRQs::Read (IO::common_busses_t& busses)
   {
-    if(ChipSelect(busses))
+    if(AddressRange() == busses.physical_address)
       switch(busses.address & 1)
       {
         case 0: // disable timer on read
@@ -36,7 +31,7 @@ namespace HuC6280
 
   void IRQs::Write(const IO::common_busses_t& busses)
   {
-    if(ChipSelect(busses))
+    if(AddressRange() == busses.physical_address)
       switch(busses.address & 1)
       {
         case 0:

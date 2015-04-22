@@ -15,13 +15,7 @@ namespace IO
     Read ,
     Write,
   };
-/*
-  struct address_t
-  {
-    uint8_t   Page    :  3;
-    uint16_t  Address : 13; // addressing for 8KB
-  };
-*/
+
   enum ESelect : const uint32_t
   {
     BIOS            = 0x080000, // System Card
@@ -87,34 +81,26 @@ namespace IO
     uint8_t  BSY   : 1; // busy signal
   }; // do not pack!
 
-  //ESelect chip_select(common_busses_t bus_interface);
+  ESelect chip_select(common_busses_t bus_interface);
 }
-
-typedef uint32_t uint21_t;
 
 struct addr_range_t
 {
-  uint21_t minimum;
-  uint21_t maximum;
+  uint32_t minimum : 21;
+  uint32_t maximum : 21;
+  bool operator ==(const uint32_t& other) const { return other >= minimum && other < maximum; }
 };
 
 class BusInterface
 {
+#if 0
 public:
-  BusInterface(void);
-
-  virtual void ProcessPorts(void) = 0;
   virtual void Reset       (void) = 0;
-
-  inline bool ChipSelect (const IO::common_busses_t& busses) const
-  {
-    return busses.physical_address >= AddressRange().minimum &&
-           busses.physical_address >= AddressRange().maximum;
-  }
 
   virtual addr_range_t AddressRange(void) const = 0;
   virtual void Read       (      IO::common_busses_t& busses) = 0;
   virtual void Write      (const IO::common_busses_t& busses) = 0;
+#endif
 };
 
 #endif // BUSINTERFACE_H

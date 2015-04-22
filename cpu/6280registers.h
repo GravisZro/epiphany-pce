@@ -17,8 +17,10 @@ namespace HuC6280
     flag_C = 0x01, // carry
   };
 
-  struct regs_t
+  struct Registers
   {
+    void Reset(void) { PC16 = A = X = Y = S = P = 0; }
+
     union
     {
       highlow_t PC;    // Program Counter
@@ -48,7 +50,7 @@ namespace HuC6280
 
     uint8_t : 8; // makes regs_t exactly 64 bits
   };
-  static_assert(sizeof(regs_t) == sizeof(uint64_t), "bad size of CPU registers struct"); // check that it is packed
+  static_assert(sizeof(Registers) == sizeof(uint64_t), "bad size of CPU registers struct"); // check that it is packed
 }
 
 #endif

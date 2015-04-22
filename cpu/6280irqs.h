@@ -22,19 +22,19 @@ namespace HuC6280
     IQTIMER = 0x04, // bit 3
   };
 
-  class IRQs : protected BusInterface
+  class IRQs : public BusInterface
   {
   public:
     IRQs(void);
-  private:
-    void ExecutionLoop(void){}
-    inline addr_range_t AddressRange(void) const { return {IO::GamepadPort, IO::IRQs}; }
-    void ProcessPorts(void);
+
     void Reset(void);
     void Read (      IO::common_busses_t& busses);
     void Write(const IO::common_busses_t& busses);
 
-    public:
+  private:
+    inline addr_range_t AddressRange(void) const { return {IO::GamepadPort, IO::IRQs}; }
+
+  public:
     // interrupt registers
     IRQSelector_t enabled; // "disable" register
     IRQSelector_t active ; // "request" register (read only)

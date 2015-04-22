@@ -6,12 +6,7 @@ namespace HuC6280
 {
   Timer::Timer(void)
   {
-    static bool initialized = false;
-    if(!initialized)
-    {
-      initialized = true;
-      Reset();
-    }
+    Reset();
   }
 
   void Timer::Reset(void)
@@ -39,21 +34,16 @@ namespace HuC6280
            !m_timer_counter;
   }
 
-  void Timer::ProcessPorts(void)
-  {
-
-  }
-
   void Timer::Read (IO::common_busses_t& busses)
   {
-    if(ChipSelect(busses))
+    if(AddressRange() == busses.physical_address)
       busses.data = m_timer_counter;
   }
 
 
   void Timer::Write(const IO::common_busses_t& busses)
   {
-    if(ChipSelect(busses))
+    if(AddressRange() == busses.physical_address)
     {
       if(!m_enabled && (busses.data & 0x01)) // if enabling
       {

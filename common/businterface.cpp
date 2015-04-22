@@ -1,27 +1,9 @@
 #include "businterface.h"
 
-#include <e_lib.h>
-
-//void e_irq_attach(e_irq_type_t irq, sighandler_t handler);
-
-static BusInterface* s_handle = nullptr;
-
-static void irq_handler(int) { s_handle->ProcessPorts(); }
-
-BusInterface::BusInterface(void)
-{
-  s_handle = this;
-  e_irq_attach(E_USER_INT, irq_handler);
-  e_coreid_t id = e_get_coreid();
-
-}
-
-
 namespace IO
 {
   ESelect chip_select(common_busses_t bus_interface)
   {
-
     uint32_t addr = bus_interface.physical_address;
 
     if(CDROM)
