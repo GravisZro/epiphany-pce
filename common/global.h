@@ -12,7 +12,27 @@
 
 #define SECTION(x) __attribute__ ((section (x)))
 
-extern uint8_t RealMemoryMap[0x00200000] SECTION ("shared_dram");
+extern uint8_t HuCard[0x00100000] SECTION ("shared_dram"); // 8 Megabits for HuCard
+
+struct pixel_t
+{
+  uint32_t        : 8; // alpha/buffer
+  uint32_t red    : 3;
+  uint32_t        : 5;
+  uint32_t green  : 3;
+  uint32_t        : 5;
+  uint32_t blue   : 3;
+  uint32_t        : 5;
+};
+
+struct framebuffer_t
+{
+  uint16_t xres; // maximum: 565
+  uint16_t yres; // maximum: 242
+  pixel_t pixels[0x24000];
+};
+
+extern framebuffer_t FrameBuffer SECTION ("shared_dram"); // framebuffer
 
 
 /* NOTE: These translator functions allow you to convert one type to another without the need for
@@ -55,19 +75,19 @@ template<typename A, typename B> constexpr A& to (B* b) { return to<A, B>(*b); }
 template<typename A> constexpr A&        to (int b) { return *reinterpret_cast<A*>(b); }
 
 // translator shortcuts
-template<typename B> constexpr char&     to_c8 (B& b) { return to<char    >(b); }
+template<typename B> constexpr char&     to_s8 (B& b) { return to<char    >(b); }
 template<typename B> constexpr uint8_t&  to_u8 (B& b) { return to<uint8_t >(b); }
 template<typename B> constexpr uint16_t& to_u16(B& b) { return to<uint16_t>(b); }
 template<typename B> constexpr uint32_t& to_u32(B& b) { return to<uint32_t>(b); }
 
 // translator shortcuts for pointers
-template<typename B> constexpr char&     to_c8 (B* b) { return to<char    >(b); }
+template<typename B> constexpr char&     to_s8 (B* b) { return to<char    >(b); }
 template<typename B> constexpr uint8_t&  to_u8 (B* b) { return to<uint8_t >(b); }
 template<typename B> constexpr uint16_t& to_u16(B* b) { return to<uint16_t>(b); }
 template<typename B> constexpr uint32_t& to_u32(B* b) { return to<uint32_t>(b); }
 
 // translator shortcuts for abolute addresses
-constexpr char&     to_c8 (int b) { return to<char    >(b); }
+constexpr char&     to_s8 (int b) { return to<char    >(b); }
 constexpr uint8_t&  to_u8 (int b) { return to<uint8_t >(b); }
 constexpr uint16_t& to_u16(int b) { return to<uint16_t>(b); }
 constexpr uint32_t& to_u32(int b) { return to<uint32_t>(b); }
